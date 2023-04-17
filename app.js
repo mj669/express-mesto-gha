@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const router = require('./routes');
 
+const ERROR_NOT_FOUND = 404;
 const { PORT = 3000 } = process.env;
 const app = express();
 
@@ -19,7 +20,7 @@ app.use((req, res, next) => {
 app.use(router);
 
 app.use((req, res) => {
-  res.status(404).send({
+  res.status(ERROR_NOT_FOUND).send({
     message: 'Страница не найдена',
   });
 });

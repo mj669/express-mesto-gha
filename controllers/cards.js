@@ -13,6 +13,7 @@ const checkCard = (card, res) => {
 
 const getCards = (req, res) => {
   Card.find({})
+    .populate(['owner', 'likes'])
     .then((cards) => {
       res.send(cards);
     })
@@ -25,7 +26,7 @@ const createCard = (req, res) => {
 
   Card.create({ name, link, owner: _id })
     .then((newCard) => {
-      res.send(newCard);
+      res.status(201).send(newCard);
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
