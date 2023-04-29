@@ -1,26 +1,23 @@
 const Card = require('../models/card');
-
-const ERROR = 400;
-const ERROR_NOT_FOUND = 404;
-const ERROR_DEFAULT = 500;
+const errors = require('../errors');
 
 const checkCard = (card, res) => {
-  if (card) {
-    return res.status(200).send(card);
+  if (!card) {
+    throw new errors.NotFoundError('Карточка не найдена');
   }
-  return res.status(ERROR_NOT_FOUND).send({ message: 'Карточка не найдена' });
+  return res.send(card);
 };
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .populate(['owner', 'likes'])
     .then((cards) => {
       res.send(cards);
     })
-    .catch(() => res.status(ERROR_DEFAULT).send({ message: 'Ошибка на сервере' }));
+    .catch(next);
 };
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { _id } = req.user;
   const { name, link } = req.body;
 
@@ -30,33 +27,28 @@ const createCard = (req, res) => {
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        return res.status(ERROR).send({ message: 'Переданы некорректные данные карточки' });
+        next(
+          new errors.ValidationError('Переданы некорректные данные карточки'),
+        );
       }
-      return res.status(ERROR_DEFAULT).send({ message: 'Ошибка на сервере' });
+      next(error);
     });
 };
 
-const deleteCard = (req, res) => {
+const deleteCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.deleteOne({ _id: cardId })
     .then((card) => {
       if (card.deletedCount === 0) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Карточка не найдена' });
+        throw new errors.NotFoundError('Карточка не найдена');
       }
       return res.send({ message: 'Карточка удалена' });
     })
-    .catch((error) => {
-      if (error.name === 'CastError') {
-        return res.status(ERROR).send({ message: 'Некорректный id' });
-      }
-      return res
-        .status(ERROR_DEFAULT)
-        .send({ message: 'Ошибка на сервере' });
-    });
+    .catch(next);
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   const owner = req.user._id;
   const { cardId } = req.params;
 
@@ -66,15 +58,10 @@ const likeCard = (req, res) => {
     { new: true, runValidators: true },
   )
     .then((card) => checkCard(card, res))
-    .catch((error) => {
-      if (error.name === 'CastError') {
-        return res.status(ERROR).send({ message: 'Некорректный id' });
-      }
-      return res.status(ERROR_DEFAULT).send({ message: 'Ошибка на сервере' });
-    });
+    .catch(next);
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   const owner = req.user._id;
   const { cardId } = req.params;
 
@@ -84,12 +71,7 @@ const dislikeCard = (req, res) => {
     { new: true, runValidators: true },
   )
     .then((card) => checkCard(card, res))
-    .catch((error) => {
-      if (error.name === 'CastError') {
-        return res.status(ERROR).send({ message: 'Некорректный id' });
-      }
-      return res.status(ERROR_DEFAULT).send({ message: 'Ошибка на сервере' });
-    });
+    .catch(next);
 };
 
 module.exports = {
