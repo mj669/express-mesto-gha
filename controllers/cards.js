@@ -30,8 +30,9 @@ const createCard = (req, res, next) => {
         next(
           new errors.ValidationError('Переданы некорректные данные карточки'),
         );
+      } else {
+        next(error);
       }
-      next(error);
     });
 };
 

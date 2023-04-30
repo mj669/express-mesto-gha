@@ -7,8 +7,7 @@ const rateLimit = require('express-rate-limit');
 const router = require('./routes');
 const authRouter = require('./routes/auth');
 const auth = require('./middlewares/auth');
-
-const ERROR_NOT_FOUND = 404;
+const NotFoundError = require('./errors/notFoundError');
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -33,10 +32,8 @@ app.use(router);
 
 app.use(errors());
 
-app.use((req, res) => {
-  res.status(ERROR_NOT_FOUND).send({
-    message: 'Страница не найдена',
-  });
+app.use((req, res, next) => {
+  next(new NotFoundError('Страница не найдена'));
 });
 
 app.use((err, req, res, next) => {

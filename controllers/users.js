@@ -22,7 +22,7 @@ const loginUser = (req, res, next) => {
       }
       return bcrypt.compare(password, user.password).then((matched) => {
         if (!matched) {
-          next(new errors.AuthError('Неверные почта или пароль'));
+          return next(new errors.AuthError('Неверные почта или пароль'));
         }
         const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
           expiresIn: '7d',
@@ -67,6 +67,12 @@ const createUser = (req, res, next) => {
         next(
           new errors.ConflictError('Пользователь с таким email уже зарегистрирвован'),
         );
+      } else if (error.name === 'ValidationError') {
+        next(
+          new errors.ValidationError('Переданы некорректные данные'),
+        );
+      } else {
+        next(error);
       }
     });
 };
@@ -87,7 +93,15 @@ const updateUser = (req, res, next) => {
 
   User.findByIdAndUpdate(owner, { name, about }, { new: true, runValidators: true })
     .then((user) => checkUser(user, res))
-    .catch(next);
+    .catch((error) => {
+      if (error.name === 'ValidationError') {
+        next(
+          new errors.ValidationError('Переданы некорректные данные'),
+        );
+      } else {
+        next(error);
+      }
+    });
 };
 
 const updateAvatar = (req, res, next) => {
@@ -96,7 +110,15 @@ const updateAvatar = (req, res, next) => {
 
   User.findByIdAndUpdate(owner, avatar, { new: true, runValidators: true })
     .then((user) => checkUser(user, res))
-    .catch(next);
+    .catch((error) => {
+      if (error.name === 'ValidationError') {
+        next(
+          new errors.ValidationError('Переданы некорректные данные'),
+        );
+      } else {
+        next(error);
+      }
+    });
 };
 
 module.exports = {
